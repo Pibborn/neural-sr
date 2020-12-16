@@ -1,0 +1,70 @@
+import numpy as np
+import tensorflow as tf
+
+from Rankers.models.DirectRanker import DirectRanker
+import gc
+
+def _ranknet_cost(y_actual, y_predicted):
+    return tf.reduce_mean(tf.math.log(1+tf.math.exp((1+y_predicted)/2))-(1+y_predicted)/2)
+
+class RankNet(DirectRanker):
+    """
+    TODO
+    """
+
+    def __init__(self,
+        # DirectRanker HPs
+        hidden_layers_dr=[256, 128, 64, 20],
+        feature_activation_dr='relu',
+        ranking_activation_dr='sigmoid',
+        feature_bias_dr=True,
+        kernel_initializer_dr=tf.random_normal_initializer,
+        kernel_regularizer_dr=0.0,
+        drop_out=0,
+        # Common HPs
+        scale_factor_train_sample=5,
+        batch_size=200,
+        loss=_ranknet_cost,
+        learning_rate=0.001,
+        learning_rate_decay_rate=1,
+        learning_rate_decay_steps=1000,
+        optimizer=tf.keras.optimizers.SGD,
+        epoch=10,
+        steps_per_epoch=None,
+        # other variables
+        verbose=0,
+        validation_size=0.0,
+        num_features=0,
+        random_seed=42,
+        name="RankNet",
+        dtype=tf.float32,
+        print_summary=False,
+    ):
+        super().__init__(
+            # DirectRanker HPs
+            hidden_layers_dr=hidden_layers_dr,
+            feature_activation_dr=feature_activation_dr,
+            ranking_activation_dr=ranking_activation_dr,
+            feature_bias_dr=feature_bias_dr,
+            kernel_initializer_dr=kernel_initializer_dr,
+            kernel_regularizer_dr=kernel_regularizer_dr,
+            drop_out=drop_out,
+            # Common HPs
+            scale_factor_train_sample=scale_factor_train_sample,
+            batch_size=batch_size,
+            learning_rate=learning_rate,
+            learning_rate_decay_rate=learning_rate_decay_rate,
+            learning_rate_decay_steps=learning_rate_decay_steps,
+            optimizer=optimizer,
+            epoch=epoch,
+            steps_per_epoch=steps_per_epoch,
+            # other variables
+            verbose=verbose,
+            validation_size=validation_size,
+            num_features=num_features,
+            random_seed=random_seed,
+            name=name,
+            dtype=dtype,
+            print_summary=print_summary,
+        )
+        
