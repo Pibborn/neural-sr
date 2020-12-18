@@ -2,7 +2,6 @@ import numpy as np
 import tensorflow as tf
 
 from sklearn.base import BaseEstimator
-import gc
 
 class DirectRanker(BaseEstimator):
     """
@@ -141,7 +140,7 @@ class DirectRanker(BaseEstimator):
         )(subtracted)
 
         self.model = tf.keras.models.Model(
-            inputs=[self.x0, self.x1],
+            inputs=[(self.x0, self.x1)],
             outputs=out,
             name='Stacker'
         )
@@ -162,47 +161,18 @@ class DirectRanker(BaseEstimator):
         if self.print_summary:
             self.model.summary()
 
-    def fit(self, x, y, **fit_params):
+    def fit(self, generator, **fit_params):
         """
         TODO
         """
         self._build_model()
 
-        x_l = []
-
-        if not self.query:
-            for c in np.unique(y):
-                x_l.append(x[np.where(y == c)])
-
-        for i in range(self.epoch):
-
-            if self.query:
-                x0_cur, x1_cur = self.make_pairs_query(x, y, fit_params['q'])
-            else:
-                x0_cur, x1_cur = self.make_pairs(x, y, x_l)
-
-            
-            if self.verbose > 0:
-                print('Epoch {}/{}'.format(i + 1, self.epoch))
-
-            if self.query:
-                batch_size = self.batch_size
-            else:
-                batch_size = self.scale_factor_train_sample * self.batch_size
-
-            self.model.fit(
-                x=[x0_cur, x1_cur],
-                y=np.ones(len(x0_cur)),
-                batch_size=batch_size,
-                steps_per_epoch=self.steps_per_epoch,
-                epochs=1,
-                verbose=self.verbose,
-                shuffle=True,
-                validation_split=self.validation_size
-            )
-            # https://github.com/tensorflow/tensorflow/issues/14181
-            # https://github.com/tensorflow/tensorflow/issues/30324
-            gc.collect()
+        self.model.fit_generator(
+            generator=generator,
+            epochs=self.epoch,
+            verbose=self.verbose,
+            workers=1
+        )
 
     def predict_proba(self, features):
         """
@@ -241,21 +211,27 @@ class DirectRanker(BaseEstimator):
         x1_cur = np.array(x1_cur)
         return x0_cur, x1_cur
 
-    def make_pairs_query(self, x, y, q_ids, num_querys=5):
+    def make_pairs_query(self, x, y, q_ids, num_querys=0):
         x0_cur = []
         x1_cur = []
-        q_ids_selected = np.random.choice(np.unique(q_ids), num_querys, replace=False)
+        if num_querys == 0:
+            q_ids_selected = np.unique(q_ids)
+        else:
+            q_ids_selected = np.random.choice(np.unique(q_ids), num_querys, replace=False)
         for qi in q_ids_selected:
             x_q = x[q_ids == qi]
             y_q = y[q_ids == qi]
             sort_ids = np.argsort(y_q)
             x_q = x_q[sort_ids]
             y_q = y_q[sort_ids]
-            max_samples_qi = min(np.ceil(self.batch_size / len(q_ids_selected)), len(x_q))
+            if num_querys == 0:
+                max_samples_qi = int(min(np.ceil(self.batch_size / len(q_ids_selected)), len(x_q)))
+            else:
+                max_samples_qi = len(x_q)
             # get random idxs between 0 and the query length - 1 (the last element can't ever be in the top position)
-            idx0 = np.random.randint(0, len(x_q) - 1, int(max_samples_qi))
-            # get random idxs between 1 and the value of idx0 in the same position. this is an offset instead of a idx
-            idx1 = np.random.randint(1, len(y_q) - idx0, int(max_samples_qi))
+            idx0 = np.random.randint(0, len(x_q) - 1, max_samples_qi)
+            # get random idxs between 1 and the value of idx0 at the same position. this is an offset instead of a idx
+            idx1 = np.random.randint(1, len(y_q) - idx0, max_samples_qi)
             idx1 += idx0
             x0_cur.extend(x_q[idx0])
             x1_cur.extend(x_q[idx1])

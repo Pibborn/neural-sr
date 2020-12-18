@@ -176,6 +176,7 @@ class LambdaRank(BaseEstimator):
             x_l.append(x[np.where(y == c)])
 
         for i in range(self.epoch):
+            print('Epoch {}'.format(i))
             x_epoch = x
             y_epoch = y
             for j in range(int(self.steps_per_epoch)):
