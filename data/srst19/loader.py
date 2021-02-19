@@ -50,7 +50,7 @@ class SRST19Generator(tf.keras.utils.Sequence):
             self.current_split = str
 
         def __len__(self):
-            return int(np.floor(len(self.x[0]) / self.batch_size))
+            return max(self.q)
 
         def __getitem__(self, i):
             if self.query:
@@ -58,7 +58,7 @@ class SRST19Generator(tf.keras.utils.Sequence):
                     x0, x1, y = self.make_pairs_query()
                     return [x0, x1], y
                 else:
-                    return self.make_batch()
+                    return self.make_batch_listnet()
             else:
                 return self.make_pairs(i)
 
@@ -93,12 +93,19 @@ class SRST19Generator(tf.keras.utils.Sequence):
             while num_samples < self.batch_size:
                 qi = self.q == self.q_order[self.q_current]
                 x_q = self.x[qi]
-                y_q = self.y[qi] / max(self.y[qi])
+                y_q = 1 / self.y[qi]
                 x_cur.extend(x_q)
                 y_cur.extend(y_q)
                 self.q_current += 1
                 num_samples = len(x_cur)
             return np.array(x_cur), np.array(y_cur)
+
+        def make_batch_listnet(self):
+            qi = self.q == self.q_order[self.q_current]
+            x_q = self.x[qi]
+            y_q = np.argsort(self.y[qi])[::-1]
+            self.q_current += 1
+            return np.array(x_q), np.array(y_q, dtype=np.float32)
 
         def make_batch_random(self):
             q_ids_selected = np.random.choice(np.unique(self.q), self.query_per_batch, replace=False)
