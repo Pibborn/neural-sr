@@ -24,14 +24,17 @@ def preprocess(df):
 
 class SRST19Generator(tf.keras.utils.Sequence):
         def __init__(self, batch_size=32, shuffle=True, language='en', query=True,
-                     query_per_batch=5, split='train'):
+                     query_per_batch=5, split='train', pairwise=True):
             self.batch_size = batch_size
-            self.train_data, self.dev_data, self.test_data = load_data(lang='en')
+            self.train_data, self.dev_data, self.test_data = load_data(lang=language)
+            self.q_order = np.random.permutation(range(1, max(self.train_data[2])-1))
+            self.q_current = 0
             self.shuffle = shuffle
             self.query = query
             self.query_per_batch = query_per_batch
             self.current_split = split
             self.set_split(split)
+            self.pairwise = pairwise
             self.on_epoch_end()
 
         def set_split(self, str):
@@ -47,12 +50,15 @@ class SRST19Generator(tf.keras.utils.Sequence):
             self.current_split = str
 
         def __len__(self):
-            return int(np.ceil(len(self.train_data[0][0]) / self.batch_size))
+            return int(np.floor(len(self.x[0]) / self.batch_size))
 
         def __getitem__(self, i):
             if self.query:
-                x0, x1, y = self.make_pairs_query()
-                return [x0, x1], y
+                if self.pairwise:
+                    x0, x1, y = self.make_pairs_query()
+                    return [x0, x1], y
+                else:
+                    return self.make_batch()
             else:
                 return self.make_pairs(i)
 
@@ -80,8 +86,38 @@ class SRST19Generator(tf.keras.utils.Sequence):
                 self.q = self.q[~q_idx]
             return np.array(x0_cur), np.array(x1_cur), np.ones(len(x0_cur))
 
+        def make_batch(self):
+            num_samples = 0
+            x_cur = []
+            y_cur = []
+            while num_samples < self.batch_size:
+                qi = self.q == self.q_order[self.q_current]
+                x_q = self.x[qi]
+                y_q = self.y[qi] / max(self.y[qi])
+                x_cur.extend(x_q)
+                y_cur.extend(y_q)
+                self.q_current += 1
+                num_samples = len(x_cur)
+            return np.array(x_cur), np.array(y_cur)
+
+        def make_batch_random(self):
+            q_ids_selected = np.random.choice(np.unique(self.q), self.query_per_batch, replace=False)
+            x_cur = []
+            y_cur = []
+            for qi in q_ids_selected:
+                q_idx = self.q == qi
+                x_q = self.x[q_idx]
+                y_q = self.y[q_idx] / max(self.y[q_idx])
+                self.x = self.x[~q_idx]
+                self.y = self.y[~q_idx]
+                self.q = self.q[~q_idx]
+                x_cur.extend(x_q)
+                y_cur.extend(y_q)
+            return np.array(x_cur), np.array(y_cur)
+
         def make_pairs(self, i):
             pass
 
         def on_epoch_end(self):
             self.x, self.y, self.q = self.data
+            self.q_current = 0

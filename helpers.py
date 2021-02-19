@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import kendalltau
 
-def kendall_tau_per_query(y, y_pred, q):
+def kendall_tau_per_query(y_pred, y, q):
     tau_list = []
     for qi in np.unique(q):
         y_q = y[q == qi]

@@ -121,6 +121,16 @@ class ListNet(BaseEstimator):
                 name="nn_hidden_" + str(i)
             )(nn)
 
+        nn = tf.keras.layers.Dense(
+            units=1,
+            activation=None,
+            kernel_initializer=self.kernel_initializer_dr(seed=self.random_seed),
+            kernel_regularizer=tf.keras.regularizers.l2(self.kernel_regularizer_dr),
+            bias_regularizer=tf.keras.regularizers.l2(self.kernel_regularizer_dr),
+            activity_regularizer=tf.keras.regularizers.l2(self.kernel_regularizer_dr),
+            name="nn_cls"
+        )(nn)
+
         self.model = tf.keras.models.Model(input_layer, nn, name='ListNet')
 
         if self.learning_rate_decay_steps > 0:
@@ -155,7 +165,7 @@ class ListNet(BaseEstimator):
         sx = tf.nn.softmax(y_pred, axis=0)
         return -tf.math.reduce_sum(st * tf.math.log(sx))
 
-    def fit(self, x, y, **fit_params):
+    def fit(self, generator, **fit_params):
         """
         :param features: list of queries for training the net
         :param real_classes: list of labels inside a query
@@ -163,14 +173,11 @@ class ListNet(BaseEstimator):
         """
         self._build_model()
 
-        self.model.fit(
-            x=x,
-            y=y,
-            batch_size=self.batch_size,
+        self.model.fit_generator(
+            generator=generator,
             epochs=self.epoch,
             verbose=self.verbose,
-            shuffle=True,
-            validation_split=self.validation_size
+            workers=1
         )
 
     def predict_proba(self, features):
@@ -183,4 +190,4 @@ class ListNet(BaseEstimator):
 
         res = self.model.predict(features, batch_size=self.batch_size, verbose=self.verbose)
 
-        return [0.5 * (value + 1) for value in res]
+        return np.array([0.5 * (value + 1) for value in res])
