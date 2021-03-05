@@ -3,13 +3,13 @@ import pandas as pd
 import numpy as np
 from helpers import Constants
 
-THIS_DIR = 'hvr'
+THIS_DIR = 'srst19'
 
 def load_data(lang='en'):
-    dir_loc = '{}/{}/{}/'.format(Constants.DATA_DIR, THIS_DIR, lang)
-    train_df = pd.read_csv(dir_loc + 'en_ewt-ud-train.hvr', header=None)
-    dev_df = pd.read_csv(dir_loc + 'en_ewt-ud-dev.hvr', header=None)
-    test_df = pd.read_csv(dir_loc + 'en_ewt-ud-test.hvr', header=None)
+    dir_loc = '{}/{}/{}/{}'.format(Constants.DATA_DIR, THIS_DIR, lang, lang)
+    train_df = pd.read_csv(dir_loc + '-train.H', header=None)
+    dev_df = pd.read_csv(dir_loc + '-dev.H', header=None)
+    test_df = pd.read_csv(dir_loc + '-test.H', header=None)
     x_train, y_train, q_train = preprocess(train_df)
     x_dev, y_dev, q_dev = preprocess(dev_df)
     x_test, y_test, q_test = preprocess(test_df)
