@@ -3,6 +3,29 @@ import tensorflow as tf
 
 import numpy as np
 from sklearn.base import BaseEstimator
+from helpers import kendall_tau_per_query
+import tensorflow.keras as keras
+
+
+class PrintKendalTau(keras.callbacks.Callback):
+
+    def __init__(self, eval_data):
+        self.generator = eval_data
+
+    def kendal_metric(q):
+        def kendal_tau(y_true, y_pred):
+            return kendall_tau_per_query(y_pred.numpy(), y_true.numpy(), q)
+
+        if q is None:
+            return 'acc'
+
+        return kendal_tau
+
+    def on_epoch_end(self, epoch, logs=None):
+        y_pred = self.model.predict(self.generator.train_data[0])
+        y_pred = tf.nn.sigmoid(y_pred) # implements predict_proba
+        tau = kendall_tau_per_query(y_pred, self.generator.train_data[1], self.generator.train_data[2])
+        print("\nEpoch: {} Kendal Tau: {}".format(epoch, tau))
 
 class ListNet(BaseEstimator):
     """
@@ -84,7 +107,6 @@ class ListNet(BaseEstimator):
         self.dtype = dtype
         self.print_summary = print_summary
 
-
     def _build_model(self):
         """
         This function builds the ListNet with the values specified in the constructor
@@ -146,7 +168,7 @@ class ListNet(BaseEstimator):
         self.model.compile(
             optimizer=self.optimizer(lr_schedule),
             loss=self._def_cost,
-            metrics=['acc']
+            metrics=[]
         )
 
         if self.print_summary:
@@ -177,7 +199,8 @@ class ListNet(BaseEstimator):
             generator=generator,
             epochs=self.epoch,
             verbose=self.verbose,
-            workers=1
+            workers=1,
+            callbacks=[PrintKendalTau(generator)]
         )
 
     def predict_proba(self, features):
