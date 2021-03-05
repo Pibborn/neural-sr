@@ -50,7 +50,7 @@ class SRST19Generator(tf.keras.utils.Sequence):
             self.current_split = str
 
         def __len__(self):
-            return max(self.q)
+            return max(self.q) - 2
 
         def __getitem__(self, i):
             if self.query:
