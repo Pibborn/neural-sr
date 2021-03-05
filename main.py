@@ -1,18 +1,18 @@
 colab = False # SET THIS
 wandb = False # SET THIS
 
-from data.srst19.loader import load_data, SRST19Generator
+from loader import DatasetGenerator
 from models.DirectRanker import DirectRanker
 from models.ListNet import ListNet
 from helpers import kendall_tau_per_query
 import wandb
 
 if wandb:
-    wandb.init(project="neural-sr", entity="Pibborn", sync_tensorboard=True)
+    wandb.init(project="neural-sr", entity="jgu-wandb", sync_tensorboard=True)
 
 if __name__ == '__main__':
-    train_gen = SRST19Generator(language='en', split='train', pairwise=False)
-    #val_gen = SRST19Generator(language='en', split='dev')
+    train_gen = DatasetGenerator("srst19", language='en', split='train', pairwise=False)
+    #val_gen = DatasetGenerator(language='en', split='dev')
     print('Generator loaded.')
     num_features = len(train_gen.train_data[0][0])
     dr = ListNet(num_features=num_features, batch_size=1024, epoch=300, verbose=1, learning_rate_decay_rate=0)
