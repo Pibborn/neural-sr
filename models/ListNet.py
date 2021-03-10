@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.base import BaseEstimator
 from helpers import kendall_tau_per_query
 import tensorflow.keras as keras
-
+import math
 
 class PrintKendalTau(keras.callbacks.Callback):
 
@@ -25,7 +25,12 @@ class PrintKendalTau(keras.callbacks.Callback):
         y_pred = self.model.predict(self.generator.train_data[0])
         y_pred = tf.nn.sigmoid(y_pred) # implements predict_proba
         tau = kendall_tau_per_query(y_pred, self.generator.train_data[1], self.generator.train_data[2])
-        print("\nEpoch: {} Kendal Tau: {}".format(epoch, tau))
+
+        if math.isnan(tau[0]) or math.isnan(tau[1]):
+            print("Got NaN evaluating Kendal Tau. Data was:\n--y_pred--\n{}\n--y_actual--\n{}--q--\n{}\n"
+                .format(y_pred, self.generator.train_data[1], self.generator.train_data[2]))
+        else:
+            print("\nEpoch: {} Kendal Tau: {}".format(epoch, tau))
 
 class ListNet(BaseEstimator):
     """
@@ -183,7 +188,7 @@ class ListNet(BaseEstimator):
         :return: The loss
         """
         # ListNet top-1 reduces to a softmax and simple cross entropy
-        y_actual_scores = tf.nn.softmax(-y_actual, axis=0)
+        y_actual_scores = tf.nn.softmax(y_actual, axis=0)
         y_pred_scores = tf.nn.softmax(y_pred, axis=0)
         return -tf.reduce_sum(y_actual_scores * tf.math.log(y_pred_scores))
 
