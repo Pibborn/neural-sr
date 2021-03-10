@@ -183,7 +183,7 @@ class ListNet(BaseEstimator):
         :return: The loss
         """
         # ListNet top-1 reduces to a softmax and simple cross entropy
-        y_actual_scores = tf.nn.softmax(y_actual, axis=0)
+        y_actual_scores = tf.nn.softmax(-y_actual, axis=0)
         y_pred_scores = tf.nn.softmax(y_pred, axis=0)
         return -tf.reduce_sum(y_actual_scores * tf.math.log(y_pred_scores))
 
