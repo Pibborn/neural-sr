@@ -6,6 +6,7 @@ from sklearn.base import BaseEstimator
 from helpers import kendall_tau_per_query
 import tensorflow.keras as keras
 import math
+import sys
 
 class PrintKendalTau(keras.callbacks.Callback):
 
@@ -23,7 +24,6 @@ class PrintKendalTau(keras.callbacks.Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         y_pred = self.model.predict(self.generator.train_data[0])
-        y_pred = tf.nn.sigmoid(y_pred) # implements predict_proba
         tau = kendall_tau_per_query(y_pred, self.generator.train_data[1], self.generator.train_data[2])
 
         if math.isnan(tau[0]) or math.isnan(tau[1]):
