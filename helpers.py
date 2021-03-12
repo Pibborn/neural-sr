@@ -4,6 +4,9 @@ from scipy.stats import kendalltau
 import matplotlib.pyplot as plt
 import wandb
 
+
+class Constants:
+    DATA_DIR = 'data'
 class Globals:
     log_counts = 0
 
@@ -23,8 +26,6 @@ def kendall_tau_per_query(y_pred, y, q):
     wandb.log({'tau_std': tau_std})
     Globals.log_counts += 1
 
-    return np.mean(tau_mean), np.std(tau_std)
+    return tau_mean, tau_std
 
 
-class Constants:
-    DATA_DIR = 'data'
