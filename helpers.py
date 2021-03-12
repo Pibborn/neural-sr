@@ -4,6 +4,8 @@ from scipy.stats import kendalltau
 import matplotlib.pyplot as plt
 import wandb
 
+hist_count = 0
+
 def kendall_tau_per_query(y_pred, y, q):
     tau_list = []
     for qi in np.unique(q):
@@ -13,7 +15,8 @@ def kendall_tau_per_query(y_pred, y, q):
 
     data = [[s] for s in tau_list]
     table = wandb.Table(data=data, columns=["taus"])
-    wandb.log({'tau_distribution': wandb.plot.histogram(table, "taus", title=None)})
+    wandb.log({'tau_distribution_{}'.format(hist_count): wandb.plot.histogram(table, "taus", title=None)})
+    hist_count+=1
 
     return np.mean(tau_list), np.std(tau_list)
 
