@@ -11,17 +11,9 @@ if wandb:
     wandb.init(
         project="neural-sr", 
         entity="jgu-wandb", 
-        sync_tensorboard=True,
-        config={
-            "dataset": "srst19",
-            "epoch": 300,
-            "batch_size": 1024,
-            "regularization": 0.001
-    })
+        sync_tensorboard=True)
 
 if __name__ == '__main__':
-
-   
 
     train_gen = DatasetGenerator(wandb.config["dataset"], language='en', split='train', pairwise=False)
                                  #val_gen = DatasetGenerator(language='en', split='dev')

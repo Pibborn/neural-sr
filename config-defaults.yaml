@@ -1,0 +1,12 @@
+dataset:
+  desc: Dataset name
+  value: srst19
+epoch:
+  desc: Number of epochs to train over
+  value: 300
+batch_size:
+  desc: Size of each mini-batch
+  value: 1024
+regularization:
+  desc: Importance of the kernel regualarization term
+  value: 0.001
