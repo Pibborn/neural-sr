@@ -3,34 +3,10 @@ import tensorflow as tf
 
 import numpy as np
 from sklearn.base import BaseEstimator
-from helpers import kendall_tau_per_query
+from helpers import kendall_tau_per_query, PrintKendalTau
 import tensorflow.keras as keras
 import math
 import sys
-
-class PrintKendalTau(keras.callbacks.Callback):
-
-    def __init__(self, eval_data):
-        self.generator = eval_data
-
-    def kendal_metric(q):
-        def kendal_tau(y_true, y_pred):
-            return kendall_tau_per_query(y_pred.numpy(), y_true.numpy(), q)
-
-        if q is None:
-            return 'acc'
-
-        return kendal_tau
-
-    def on_epoch_end(self, epoch, logs=None):
-        y_pred = self.model.predict(self.generator.train_data[0])
-        tau = kendall_tau_per_query(y_pred, self.generator.train_data[1], self.generator.train_data[2])
-
-        if math.isnan(tau[0]) or math.isnan(tau[1]):
-            print("Got NaN evaluating Kendal Tau. Data was:\n--y_pred--\n{}\n--y_actual--\n{}--q--\n{}\n"
-                .format(y_pred, self.generator.train_data[1], self.generator.train_data[2]))
-        else:
-            print("\nEpoch: {} Kendal Tau: {}".format(epoch, tau))
 
 class ListNet(BaseEstimator):
     """
@@ -71,7 +47,7 @@ class ListNet(BaseEstimator):
                  ranking_activation_dr='sigmoid',
                  feature_bias_dr=True,
                  kernel_initializer_dr=tf.random_normal_initializer,
-                 kernel_regularizer_dr=0.0,
+                 kernel_regularizer_dr=0.5,
                  # Common HPs
                  batch_size=200,
                  learning_rate=0.001,
@@ -200,8 +176,8 @@ class ListNet(BaseEstimator):
         """
         self._build_model()
 
-        self.model.fit_generator(
-            generator=generator,
+        self.model.fit(
+            generator,
             epochs=self.epoch,
             verbose=self.verbose,
             workers=1,

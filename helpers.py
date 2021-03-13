@@ -2,30 +2,64 @@ import numpy as np
 import tensorflow as tf
 from scipy.stats import kendalltau
 import matplotlib.pyplot as plt
+import tensorflow.keras as keras
 import wandb
+import math
 
 
 class Constants:
     DATA_DIR = 'data'
-class Globals:
-    log_counts = 0
 
-def kendall_tau_per_query(y_pred, y, q):
+
+def kendall_tau_per_query(y_pred, y, q, ds="train"):
     tau_list = []
-    for qi in np.unique(q):
+    for qi in np.random.choice(np.unique(q), size=200, replace=False):
         y_q = y[q == qi]
         y_pred_q = tf.nn.softmax(y_pred[q == qi], axis=0)
         tau_list.append(kendalltau(y_q, y_pred_q)[0])
 
     tau_mean = np.mean(tau_list)
     tau_std = np.std(tau_list)
-    data = [[s] for s in tau_list]
-    table = wandb.Table(data=data, columns=["taus"])
-    wandb.log({'tau_distribution_{}'.format(Globals.log_counts): wandb.plot.histogram(table, "taus", title=None)})
-    wandb.log({'tau_mean': tau_mean})
-    wandb.log({'tau_std': tau_std})
-    Globals.log_counts += 1
+
+    wandb.log({'tau_mean_{}'.format(ds): tau_mean})
+    wandb.log({'tau_std_{}'.format(ds): tau_std})
 
     return tau_mean, tau_std
 
+
+class PrintKendalTau(keras.callbacks.Callback):
+
+    def __init__(self, eval_data):
+        self.generator = eval_data
+
+    def log_train_tau(self, epoch):
+        y_pred = self.model.predict(self.generator.train_data[0])
+        y = self.generator.train_data[1]
+        q = self.generator.train_data[2]
+
+        tau = kendall_tau_per_query(y_pred, y, q, ds="train")
+
+        if math.isnan(tau[0]) or math.isnan(tau[1]):
+            print("Epoch: {} - Train Data - Got NaN evaluating Kendal Tau. Data was:\n--y_pred--\n{}\n--y_actual--\n{}--q--\n{}\n"
+                  .format(epoch, y_pred, y, q))
+        else:
+            print("\nEpoch: {} - Train Data - Kendal Tau: {}".format(epoch, tau))
+
+    def log_test_tau(self, epoch):
+        y_pred = self.model.predict(self.generator.test_data[0])
+        y = self.generator.test_data[1]
+        q = self.generator.test_data[2]
+
+        tau = kendall_tau_per_query(y_pred, y, q, ds="test")
+
+        if math.isnan(tau[0]) or math.isnan(tau[1]):
+            print("Epoch: {} - Test Data - Got NaN evaluating Kendal Tau. Data was:\n--y_pred--\n{}\n--y_actual--\n{}--q--\n{}\n"
+                  .format(epoch, y_pred, y, q))
+        else:
+            print("\nEpoch: {} - Test Data - Kendal Tau: {}".format(epoch, tau))
+
+
+    def on_epoch_end(self, epoch, logs=None):
+        self.log_train_tau(epoch)
+        self.log_test_tau(epoch)
 
