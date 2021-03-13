@@ -47,7 +47,7 @@ class ListNet(BaseEstimator):
                  ranking_activation_dr='sigmoid',
                  feature_bias_dr=True,
                  kernel_initializer_dr=tf.random_normal_initializer,
-                 kernel_regularizer_dr=0.5,
+                 kernel_regularizer_dr=0,
                  # Common HPs
                  batch_size=200,
                  learning_rate=0.001,

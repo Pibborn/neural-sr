@@ -13,7 +13,7 @@ class Constants:
 
 def kendall_tau_per_query(y_pred, y, q, ds="train"):
     tau_list = []
-    for qi in np.random.choice(np.unique(q), size=200, replace=False):
+    for qi in np.random.choice(np.unique(q), size=1000, replace=False):
         y_q = y[q == qi]
         y_pred_q = tf.nn.softmax(y_pred[q == qi], axis=0)
         tau_list.append(kendalltau(y_q, y_pred_q)[0])
