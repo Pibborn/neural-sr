@@ -18,6 +18,9 @@ def kendall_tau_per_query(y_pred, y, q, ds="train"):
         y_pred_q = tf.nn.softmax(y_pred[q == qi], axis=0)
         tau_list.append(kendalltau(y_q, y_pred_q)[0])
 
+        if math.isnan(tau_list[-1]):
+            print("Found NaN\n--y_pred--\n{}\n--y--\n{}\n".format(y_pred_q.tolist(), y_q.tolist()))
+
     tau_mean = np.mean(tau_list)
     tau_std = np.std(tau_list)
 
@@ -39,11 +42,7 @@ class PrintKendalTau(keras.callbacks.Callback):
 
         tau = kendall_tau_per_query(y_pred, y, q, ds="train")
 
-        if math.isnan(tau[0]) or math.isnan(tau[1]):
-            print("Epoch: {} - Train Data - Got NaN evaluating Kendal Tau. Data was:\n--y_pred--\n{}\n--y_actual--\n{}--q--\n{}\n"
-                  .format(epoch, y_pred, y, q))
-        else:
-            print("\nEpoch: {} - Train Data - Kendal Tau: {}".format(epoch, tau))
+        print("\nEpoch: {} - Train Data - Kendal Tau: {}".format(epoch, tau))
 
     def log_test_tau(self, epoch):
         y_pred = self.model.predict(self.generator.test_data[0])
@@ -52,11 +51,7 @@ class PrintKendalTau(keras.callbacks.Callback):
 
         tau = kendall_tau_per_query(y_pred, y, q, ds="test")
 
-        if math.isnan(tau[0]) or math.isnan(tau[1]):
-            print("Epoch: {} - Test Data - Got NaN evaluating Kendal Tau. Data was:\n--y_pred--\n{}\n--y_actual--\n{}--q--\n{}\n"
-                  .format(epoch, y_pred, y, q))
-        else:
-            print("\nEpoch: {} - Test Data - Kendal Tau: {}".format(epoch, tau))
+        print("\nEpoch: {} - Test Data - Kendal Tau: {}".format(epoch, tau))
 
 
     def on_epoch_end(self, epoch, logs=None):
