@@ -19,7 +19,7 @@ def kendall_tau_per_query(y_pred, y, q, ds="train"):
         tau_list.append(kendalltau(y_q, y_pred_q)[0])
 
         if math.isnan(tau_list[-1]):
-            print("Found NaN\n--y_pred--\n{}\n--y--\n{}\n".format(y_pred_q.tolist(), y_q.tolist()))
+            print("Found NaN\n--y_pred--\n{}\n--y--\n{}\n".format(y_pred_q.numpy().tolist(), y_q.numpy().tolist()))
 
     tau_mean = np.mean(tau_list)
     tau_std = np.std(tau_list)
