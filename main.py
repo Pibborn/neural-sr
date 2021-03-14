@@ -25,7 +25,7 @@ if __name__ == '__main__':
                 epoch=wandb.config.epoch,
                 verbose=1, 
                 learning_rate_decay_rate=0, 
-                feature_activation_dr='relu', 
+                feature_activation_dr=wandb.config.feature_activation, 
                 kernel_regularizer_dr=wandb.config.regularization)
     dr.fit(train_gen)
 
