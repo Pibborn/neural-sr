@@ -15,7 +15,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         self.dataset = dataset
         self.train_data, self.dev_data, self.test_data = self.load_data(
                 lang=language)
-        self.q_order = np.random.permutation(range(1, max(self.train_data[2])-1))
+        self.q_order = np.random.permutation(range(1, max(self.train_data[2])))
         self.q_current = 0
         self.shuffle = shuffle
         self.query = query
@@ -99,11 +99,17 @@ class DatasetGenerator(tf.keras.utils.Sequence):
             num_samples = len(x_cur)
         return np.array(x_cur), np.array(y_cur)
 
-    def make_batch_listnet(self):
-        qi = self.q == self.q_order[self.q_current]
+    def make_batch_listnet(self, i=None):
+        if i is not None:
+            q_current = i
+        else:
+            q_current = self.q_current
+            self.q_current += 1
+        qi = self.q == self.q_order[q_current]
         x_q = self.x[qi]
-        y_q = np.argsort(self.y[qi])[::-1]
-        self.q_current += 1
+        assert len(x_q) > 0
+        #y_q = np.argsort(self.y[qi])
+        y_q = self.y[qi]
         return np.array(x_q), np.array(y_q, dtype=np.float32)
 
     def make_batch_random(self):

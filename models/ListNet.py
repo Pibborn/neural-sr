@@ -3,10 +3,11 @@ import tensorflow as tf
 
 import numpy as np
 from sklearn.base import BaseEstimator
-from helpers import kendall_tau_per_query, PrintKendalTau
+from helpers import kendall_tau_per_query, PrintKendalTau, PrintTensor
 import tensorflow.keras as keras
 import math
 import sys
+import tensorflow.keras.backend as K
 
 class ListNet(BaseEstimator):
     """
@@ -42,8 +43,8 @@ class ListNet(BaseEstimator):
 
     def __init__(self,
                  # ListNet HPs
-                 hidden_layers_dr=[256, 128, 64, 20],
-                 feature_activation_dr='tanh',
+                 hidden_layers_dr=[20],
+                 feature_activation_dr='sigmoid',
                  ranking_activation_dr='sigmoid',
                  feature_bias_dr=True,
                  kernel_initializer_dr=tf.random_normal_initializer,
@@ -149,7 +150,7 @@ class ListNet(BaseEstimator):
         self.model.compile(
             optimizer=self.optimizer(lr_schedule),
             loss=self._def_cost,
-            metrics=[]
+            metrics=[],
         )
 
         if self.print_summary:
@@ -165,7 +166,9 @@ class ListNet(BaseEstimator):
         """
         # ListNet top-1 reduces to a softmax and simple cross entropy
         y_actual_scores = tf.nn.softmax(y_actual, axis=0)
-        y_pred_scores = tf.nn.softmax(-y_pred, axis=0)
+        y_pred_scores = tf.nn.softmax(y_pred, axis=0)
+        K.print_tensor(tf.nn.softmax(y_actual, axis=0), message='y_actual')
+        K.print_tensor(tf.nn.softmax(y_pred, axis=0), message='y_pred')
         return -tf.reduce_sum(y_actual_scores * tf.math.log(y_pred_scores))
 
     def fit(self, generator, **fit_params):
@@ -181,7 +184,7 @@ class ListNet(BaseEstimator):
             epochs=self.epoch,
             verbose=self.verbose,
             workers=1,
-            callbacks=[PrintKendalTau(generator)]
+            callbacks=[PrintKendalTau(generator), PrintTensor(generator, self.model)]
         )
 
     def predict_proba(self, features):

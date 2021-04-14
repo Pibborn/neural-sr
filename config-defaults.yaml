@@ -9,4 +9,10 @@ batch_size:
   value: 1024
 regularization:
   desc: Importance of the kernel regualarization term
+  value: 0.0001
+feature_activation:
+  desc: Sigmoid or tanh I guess
+  value: sigmoid
+learning_rate:
+  desc: lr
   value: 0.001
