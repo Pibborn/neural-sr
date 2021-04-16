@@ -16,3 +16,6 @@ feature_activation:
 learning_rate:
   desc: lr
   value: 0.001
+hidden_layers:
+  desc: array specifying the number of neurons per layer
+  value: [50, 20, 1]

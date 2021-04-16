@@ -102,18 +102,19 @@ class ListNet(BaseEstimator):
             name="input"
         )
 
-        nn = tf.keras.layers.Dense(
-            units=self.hidden_layers_dr[0],
-            activation=self.feature_activation_dr,
-            use_bias=self.feature_bias_dr,
-            kernel_initializer=self.kernel_initializer_dr(seed=self.random_seed),
-            kernel_regularizer=tf.keras.regularizers.l2(self.kernel_regularizer_dr),
-            bias_regularizer=tf.keras.regularizers.l2(self.kernel_regularizer_dr),
-            activity_regularizer=tf.keras.regularizers.l2(self.kernel_regularizer_dr),
-            name="nn_hidden_0"
-        )(input_layer)
+        # nn = tf.keras.layers.Dense(
+        #     units=self.hidden_layers_dr[0],
+        #     activation=self.feature_activation_dr,
+        #     use_bias=self.feature_bias_dr,
+        #     kernel_initializer=self.kernel_initializer_dr(seed=self.random_seed),
+        #     kernel_regularizer=tf.keras.regularizers.l2(self.kernel_regularizer_dr),
+        #     bias_regularizer=tf.keras.regularizers.l2(self.kernel_regularizer_dr),
+        #     activity_regularizer=tf.keras.regularizers.l2(self.kernel_regularizer_dr),
+        #     name="nn_hidden_0"
+        # )(input_layer)
+        nn = input_layer
 
-        for i in range(1, len(self.hidden_layers_dr)):
+        for i in range(0, len(self.hidden_layers_dr)):
             nn = tf.keras.layers.Dense(
                 units=self.hidden_layers_dr[i],
                 activation=self.feature_activation_dr,

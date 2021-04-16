@@ -18,6 +18,7 @@ if __name__ == '__main__':
     train_gen = DatasetGenerator(wandb.config["dataset"], language='en', split='train', pairwise=False)
                                  #val_gen = DatasetGenerator(language='en', split='dev')
     print('Generator loaded.')
+    print(wandb.config.hidden_layers)
     num_features = len(train_gen.train_data[0][0])
     dr = ListNet(
                 num_features=num_features, 
@@ -27,7 +28,8 @@ if __name__ == '__main__':
                 learning_rate_decay_rate=0, 
                 feature_activation_dr=wandb.config.feature_activation, 
                 kernel_regularizer_dr=wandb.config.regularization,
-                learning_rate=wandb.config.learning_rate)
+                learning_rate=wandb.config.learning_rate,
+                hidden_layers_dr=wandb.config.hidden_layers)
     dr.fit(train_gen)
 
     y_pred = dr.predict_proba(train_gen.test_data[0])
