@@ -167,8 +167,8 @@ class ListNet(BaseEstimator):
         # ListNet top-1 reduces to a softmax and simple cross entropy
         y_actual_scores = tf.nn.softmax(y_actual, axis=0)
         y_pred_scores = tf.nn.softmax(y_pred, axis=0)
-        K.print_tensor(tf.nn.softmax(y_actual, axis=0), message='y_actual')
-        K.print_tensor(tf.nn.softmax(y_pred, axis=0), message='y_pred')
+        #K.print_tensor(tf.nn.softmax(y_actual, axis=0), message='y_actual')
+        #K.print_tensor(tf.nn.softmax(y_pred, axis=0), message='y_pred')
         return -tf.reduce_sum(y_actual_scores * tf.math.log(y_pred_scores))
 
     def fit(self, generator, **fit_params):
