@@ -68,26 +68,42 @@ class PrintTensor(keras.callbacks.Callback):
         self.output_tensor = tensor
 
     def on_epoch_begin(self, epoch, logs=None):
-        print()
-        #x, y, q = self.generator.test_data[0], self.generator.test_data[1], self.generator.test_data[2]
-        data, yi = self.generator.make_batch_listnet(1)
-        #data = x[q==42]
-        #yi = y[q==42]
-        y_pred = self.output_tensor(data).numpy().astype(np.double)
-        y_actual = tf.nn.softmax(yi.astype(np.double))
-        y_pred_scores = tf.nn.softmax(y_pred, axis=0)
-        y_actual_scores = tf.nn.softmax(y_actual, axis=0)
-        print('Output tensor, no activation: {}'.format(self.output_tensor(data)))
-        print('Output tensor, softmax: {}'.format(tf.nn.softmax(self.output_tensor(data), axis=0)))
-        print('Labels, no activation: {}'.format(yi))
-        print('Labels, softmax: {}'.format(tf.nn.softmax(yi.astype(float), axis=0)))
-        #loss = -tf.reduce_sum(y_actual_scores * tf.math.log(y_pred_scores))
-        loss = self._def_cost(y_actual, y_pred)
-        print('Loss value: {}'.format(loss))
+        if epoch % 10 != 0:
+            return
 
-    #def on_batch_begin(self, batch, logs=None):
-    #    print(batch)
-    #    exit(1)
+        x, y, q = self.generator.dev_data
+        table = wandb.Table(columns=["epoch", "ex_id", "y_actual", "y_pred"])
+
+        for i in set(q):
+            qi = q == i
+
+            data = x[qi]
+            yi = y[qi]
+
+            y_pred = self.output_tensor(data).numpy().astype(np.double)
+            y_actual = tf.nn.softmax(yi.astype(np.double))
+            y_pred_scores = tf.argsort(tf.reshape(tf.nn.softmax(y_pred, axis=0), [-1]))
+            ex_len = y_pred_scores.shape[0]
+            
+            y_pred_scores = tf.reshape(y_pred_scores, [ex_len, 1])
+            y_actual_scores = tf.argsort(tf.nn.softmax(y_actual, axis=0))
+            y_actual_scores = tf.reshape(y_actual_scores, [ex_len,1])
+
+            exno = i
+
+            # datacols = ["c"+str(i) for i in range(data.shape[1])]
+
+            ep_data = np.zeros([ex_len, 1]) + epoch
+            ex_data = np.zeros([ex_len, 1]) + exno
+
+            data = np.concatenate([ep_data, ex_data, y_actual_scores, y_pred_scores], axis=1)
+
+            for d in data:
+                table.add_data(*d)
+
+        wandb.log({"examples" : table}, commit = False)
+
+
 
     def _def_cost(self, y_actual, y_pred):
         """

@@ -17,8 +17,7 @@ if __name__ == '__main__':
 
     train_gen = DatasetGenerator(wandb.config["dataset"], language='en', split='train', pairwise=False)
                                  #val_gen = DatasetGenerator(language='en', split='dev')
-    print('Generator loaded.')
-    print(wandb.config.hidden_layers)
+
     num_features = len(train_gen.train_data[0][0])
     dr = ListNet(
                 num_features=num_features, 
