@@ -28,9 +28,9 @@ class DatasetGenerator(tf.keras.utils.Sequence):
             
     def load_data(self, lang='en'):
         dir_loc = '{}/{}/{}/{}'.format(Constants.DATA_DIR, self.dataset, lang, lang)
-        train_df = pd.read_csv(dir_loc + '-train_redux.H', header=None)
-        dev_df = pd.read_csv(dir_loc + '-dev_redux.H', header=None)
-        test_df = pd.read_csv(dir_loc + '-test_redux.H', header=None)
+        train_df = pd.read_csv(dir_loc + '-train.H', header=None)
+        dev_df = pd.read_csv(dir_loc + '-dev.H', header=None)
+        test_df = pd.read_csv(dir_loc + '-test.H', header=None)
         x_train, y_train, q_train = preprocess(train_df)
         x_dev, y_dev, q_dev = preprocess(dev_df)
         x_test, y_test, q_test = preprocess(test_df)
