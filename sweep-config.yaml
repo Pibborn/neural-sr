@@ -1,0 +1,26 @@
+program: main.py
+method: bayes
+metric:
+  goal: minimize
+  name: tau_mean_val
+parameters:
+  feature_activation:
+    values:
+      - sigmoid
+      - relu
+    distribution: categorical
+  regularization:
+    max: 0.0002
+    min: 0.00005
+    distribution: uniform
+  learning_rate:
+    max: 0.002
+    min: 0.0005
+    distribution: uniform
+  epoch:
+    max: 500
+    min: 50
+    distribution: int_uniform
+  hidden_layers:
+    values: [[], [10],[50],[100], [10,5], [20,10], [50,20], [100,50], [100,80,60,40,20,10]]
+    distribution: categorical

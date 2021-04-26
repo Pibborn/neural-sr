@@ -46,20 +46,20 @@ class PrintKendalTau(keras.callbacks.Callback):
 
         print("Epoch: {} - Train Data - Kendal Tau: {}".format(epoch, tau))
 
-    def log_test_tau(self, epoch):
-        y_pred = self.model.predict(self.generator.test_data[0])
-        y = self.generator.test_data[1]
-        q = self.generator.test_data[2]
+    def log_val_tau(self, epoch):
+        y_pred = self.model.predict(self.generator.val_data[0])
+        y = self.generator.val_data[1]
+        q = self.generator.val_data[2]
 
-        tau = kendall_tau_per_query(y_pred, y, q, ds="test")
+        tau = kendall_tau_per_query(y_pred, y, q, ds="val")
 
-        print("Epoch: {} - Test Data - Kendal Tau: {}".format(epoch, tau))
+        print("Epoch: {} - Validation Data - Kendal Tau: {}".format(epoch, tau))
 
 
     def on_epoch_end(self, epoch, logs=None):
         print()
         self.log_train_tau(epoch)
-        self.log_test_tau(epoch)
+        self.log_val_tau(epoch)
 
 class PrintTensor(keras.callbacks.Callback):
 
@@ -84,14 +84,12 @@ class PrintTensor(keras.callbacks.Callback):
             y_actual = tf.nn.softmax(yi.astype(np.double))
             y_pred_scores = tf.argsort(tf.reshape(tf.nn.softmax(y_pred, axis=0), [-1]))
             ex_len = y_pred_scores.shape[0]
-            
+
             y_pred_scores = tf.reshape(y_pred_scores, [ex_len, 1])
             y_actual_scores = tf.argsort(tf.nn.softmax(y_actual, axis=0))
             y_actual_scores = tf.reshape(y_actual_scores, [ex_len,1])
 
             exno = i
-
-            # datacols = ["c"+str(i) for i in range(data.shape[1])]
 
             ep_data = np.zeros([ex_len, 1]) + epoch
             ex_data = np.zeros([ex_len, 1]) + exno
