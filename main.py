@@ -14,6 +14,7 @@ if wandb:
         sync_tensorboard=True)
 
 if __name__ == '__main__':
+    wandb.config.update(allow_val_change=True)
 
     train_gen = DatasetGenerator(wandb.config["dataset"], language='en', split='train', pairwise=False)
                                  #val_gen = DatasetGenerator(language='en', split='dev')
