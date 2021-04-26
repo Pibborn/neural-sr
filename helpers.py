@@ -47,9 +47,9 @@ class PrintKendalTau(keras.callbacks.Callback):
         print("Epoch: {} - Train Data - Kendal Tau: {}".format(epoch, tau))
 
     def log_val_tau(self, epoch):
-        y_pred = self.model.predict(self.generator.val_data[0])
-        y = self.generator.val_data[1]
-        q = self.generator.val_data[2]
+        y_pred = self.model.predict(self.generator.dev_data[0])
+        y = self.generator.dev_data[1]
+        q = self.generator.dev_data[2]
 
         tau = kendall_tau_per_query(y_pred, y, q, ds="val")
 
