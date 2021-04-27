@@ -18,9 +18,8 @@ parameters:
     min: 0.0005
     distribution: uniform
   epoch:
-    max: 500
-    min: 50
-    distribution: int_uniform
+    values: [100]
+    distribution: categorical
   hidden_layers:
     values: [[], [10],[50],[100], [10,5], [20,10], [50,20], [100,50], [100,80,60,40,20,10]]
     distribution: categorical

@@ -19,3 +19,6 @@ learning_rate:
 hidden_layers:
   desc: array specifying the number of neurons per layer
   value: [50, 20, 1]
+limit_dataset_size:
+  desc: maximum number of rows to read from datasets on disk (-1 to load them all)
+  value: 1000

@@ -6,6 +6,7 @@ from models.DirectRanker import DirectRanker
 from models.ListNet import ListNet
 from helpers import kendall_tau_per_query
 import wandb
+import os
 
 if wandb:
     wandb.init(
@@ -15,7 +16,7 @@ if wandb:
         allow_val_change=True)
 
 if __name__ == '__main__':
-    train_gen = DatasetGenerator(wandb.config["dataset"], language='en', split='train', pairwise=False)
+    train_gen = DatasetGenerator(wandb.config["dataset"], language='en', split='train', pairwise=False, limit_dataset_size=wandb.config.limit_dataset_size)
                                  #val_gen = DatasetGenerator(language='en', split='dev')
 
     num_features = len(train_gen.train_data[0][0])
@@ -31,7 +32,5 @@ if __name__ == '__main__':
                 hidden_layers_dr=wandb.config.hidden_layers)
     dr.fit(train_gen)
 
-    y_pred = dr.predict_proba(train_gen.test_data[0])
-    avg_tau, std_tau = kendall_tau_per_query(y_pred, train_gen.val_data[1], train_gen.val_data[2])
-    print('Average Kendall tau: {} \n Standard Deviation: {}'.format(avg_tau, std_tau))
-    wandb.log({'KTau avg': avg_tau, 'KTau std': std_tau})
+    # y_pred = dr.predict_proba(train_gen.test_data[0])
+    dr.model.save(os.path.join(wandb.run.dir, "model.h5"))
