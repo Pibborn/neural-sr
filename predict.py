@@ -11,21 +11,26 @@ import tensorflow as tf
 
 
 def predictions_to_pandas(model, x, y, q):
+    print("predicting")
+    y_ = model.predict_proba(x).numpy().astype(np.double)
     table = pd.DataFrame(columns=["ex_id", "y_actual", "y_pred"])
 
+    print(print(kendall_tau_per_query(y_, y, q)))
+
+    print("formatting output")
     for i in set(q):
             qi = q == i
 
             data = x[qi]
             yi = y[qi]
+            y_i = y_[qi]
 
-            y_pred = model.predict_proba(data).numpy().astype(np.double)
-            y_actual = tf.nn.softmax(yi.astype(np.double))
-            y_pred_scores = tf.argsort(tf.reshape(
-                tf.nn.softmax(y_pred, axis=0), [-1]))
-            ex_len = y_pred_scores.shape[0]
+            ex_len = data.shape[0]
 
+            y_pred_scores = tf.argsort(tf.reshape(tf.nn.softmax(y_i, axis=0), [-1]))
             y_pred_scores = tf.reshape(y_pred_scores, [ex_len, 1])
+
+            y_actual = tf.nn.softmax(yi.astype(np.double))
             y_actual_scores = tf.argsort(tf.nn.softmax(y_actual, axis=0))
             y_actual_scores = tf.reshape(y_actual_scores, [ex_len, 1])
 
@@ -36,8 +41,8 @@ def predictions_to_pandas(model, x, y, q):
             all_out_data = np.concatenate(
                 [ex_data, y_actual_scores, y_pred_scores], axis=1)
 
-            panda_out = pd.DataFrame(all_out_data, columns=table.columns)
-            table.append(panda_out)
+            panda_out = pd.DataFrame(all_out_data.astype(int), columns=table.columns)
+            table = table.append(panda_out)
 
             # for d in data:
             #     table.append(*d)
@@ -75,8 +80,7 @@ if __name__ == '__main__':
     dr.model.load_weights(restored_model.name)
     dr.verbose = False
 
-    X,y,q = train_gen.test_data
+    X,y,q = train_gen.dev_data
 
-    df = predictions_to_pandas(dr, X,y,q)
-    df.to_csv("predictions.csv")
+    predictions_to_pandas(dr, X,y,q).to_csv("predictions.csv")
 
