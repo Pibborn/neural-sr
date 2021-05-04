@@ -1,6 +1,6 @@
 dataset:
   desc: Dataset name
-  value: srst19
+  value: hvr
 epoch:
   desc: Number of epochs to train over
   value: 300
