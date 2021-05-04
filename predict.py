@@ -49,6 +49,10 @@ def predictions_to_pandas(model, x, y, q):
 
     return table
 
+
+# Disabling GPU computation since is not useful with these experiments
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
 restored_model = wandb.restore(
     'model.h5', run_path="jgu-wandb/neural-sr/3kldppmo")
 restored_config = wandb.restore(

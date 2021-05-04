@@ -8,6 +8,9 @@ from helpers import kendall_tau_per_query
 import wandb
 import os
 
+# Disabling GPU computation since is not useful with these experiments
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
 if wandb:
     wandb.init(
         project="neural-sr", 
