@@ -10,12 +10,11 @@ def preprocess(df):
     return x.to_numpy(), y.to_numpy(), q.to_numpy()
 
 class DatasetGenerator(tf.keras.utils.Sequence):
-    def __init__(self, dataset, batch_size=32, shuffle=True, language='en', query=True, query_per_batch=5, split='train', pairwise=True, limit_dataset_size=None):
+    def __init__(self, dataset, batch_size=32, shuffle=True, query=True, query_per_batch=5, split='train', pairwise=True, limit_dataset_size=None):
         self.limit_dataset_size = limit_dataset_size
         self.batch_size = batch_size
         self.dataset = dataset
-        self.train_data, self.dev_data, self.test_data = self.load_data(
-                lang=language)
+        self.train_data, self.dev_data, self.test_data = self.load_data()
         self.q_order = np.random.permutation(range(1, max(self.train_data[2])))
         self.q_current = 0
         self.shuffle = shuffle
@@ -28,11 +27,11 @@ class DatasetGenerator(tf.keras.utils.Sequence):
 
             
     def load_data(self, lang='en'):
-        dir_loc = '{}/{}/{}/{}'.format(Constants.DATA_DIR, self.dataset, lang, lang)
-        train_df = pd.read_csv(dir_loc + '-train.H', header=None, nrows=self.limit_dataset_size)
-        dev_df = pd.read_csv(dir_loc + '-dev.H', header=None,
+        dir_loc = '{}/{}'.format(Constants.DATA_DIR, self.dataset)
+        train_df = pd.read_csv(dir_loc + '-train.hvr', header=None, nrows=self.limit_dataset_size)
+        dev_df = pd.read_csv(dir_loc + '-dev.hvr', header=None,
                              nrows=self.limit_dataset_size)
-        test_df = pd.read_csv(dir_loc + '-test.H',
+        test_df = pd.read_csv(dir_loc + '-test.hvr',
                               header=None, nrows=self.limit_dataset_size)
         x_train, y_train, q_train = preprocess(train_df)
         x_dev, y_dev, q_dev = preprocess(dev_df)

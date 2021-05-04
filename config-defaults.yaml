@@ -1,6 +1,6 @@
 dataset:
   desc: Dataset name
-  value: hvr
+  value: hvr/en_ewt-ud
 epoch:
   desc: Number of epochs to train over
   value: 300
