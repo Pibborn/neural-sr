@@ -1,6 +1,7 @@
 colab = False # SET THIS
 wandb = False # SET THIS
 
+from wandb.env import ARGS
 from loader import DatasetGenerator
 from models.DirectRanker import DirectRanker
 from models.ListNet import ListNet
@@ -8,12 +9,13 @@ from helpers import kendall_tau_per_query
 import wandb
 import os
 import yaml
+import sys
 
 # Disabling GPU computation since is not useful with these experiments
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 restored_config = wandb.restore(
-    'config.yaml', run_path="jgu-wandb/neural-sr/oze2ccpl")
+    'config.yaml', run_path=sys.argv[1])
 
 # Working around bug in wandb which does not allow to change config values
 # even when allow_val_change is set to True. To workaround that, we remove
@@ -24,6 +26,7 @@ with open(restored_config.name) as file:
     config = yaml.safe_load(file)
 
 config['limit_dataset_size'] = { 'desc': None, 'value': None }
+config['target-run'] = { 'desc': 'wandb run used to initialize training', 'value': sys.argv[1] }
 
 WORKAROUND_CONFIG_FILE = "full-train-config.yaml"
 with open(WORKAROUND_CONFIG_FILE, 'w') as file:
