@@ -7,6 +7,7 @@ from models.ListNet import ListNet
 from helpers import kendall_tau_per_query
 import wandb
 import os
+import yaml
 
 # Disabling GPU computation since is not useful with these experiments
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -14,19 +15,27 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 restored_config = wandb.restore(
     'config.yaml', run_path="jgu-wandb/neural-sr/oze2ccpl")
 
-# with open(restored_config.name) as file:
-#     config = yaml.safe_load(file)
+# Working around bug in wandb which does not allow to change config values
+# even when allow_val_change is set to True. To workaround that, we remove
+# the config-defaults.yaml file from the directory, download the config file
+# from the network, update it to remove the limit_dataset_size constraint and
+# use the modified file to initialize wandb.
+with open(restored_config.name) as file:
+    config = yaml.safe_load(file)
+
+config['limit_dataset_size'] = { 'desc': None, 'value': None }
+
+WORKAROUND_CONFIG_FILE = "full-train-config.yaml"
+with open(WORKAROUND_CONFIG_FILE, 'w') as file:
+    yaml.dump(config, stream=file)
 
 if wandb:
     wandb.init(
         project="neural-sr", 
         entity="jgu-wandb",
-        config=restored_config.name,
+        config=WORKAROUND_CONFIG_FILE,
         sync_tensorboard=True,
         allow_val_change=True)
-
-# overwrite limit_dataset_size so to train over all available training data
-wandb.config.limit_dataset_size=None
 
 if __name__ == '__main__':
     train_gen = DatasetGenerator(wandb.config.dataset, split='train', pairwise=False, limit_dataset_size=wandb.config.limit_dataset_size)
