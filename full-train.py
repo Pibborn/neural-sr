@@ -27,6 +27,7 @@ with open(restored_config.name) as file:
 
 config['limit_dataset_size'] = { 'desc': None, 'value': None }
 config['target-run'] = { 'desc': 'wandb run used to initialize training', 'value': sys.argv[1] }
+config['epoch']['value'] = 200
 
 WORKAROUND_CONFIG_FILE = "full-train-config.yaml"
 with open(WORKAROUND_CONFIG_FILE, 'w') as file:
