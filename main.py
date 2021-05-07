@@ -19,7 +19,7 @@ if wandb:
         allow_val_change=True)
 
 if __name__ == '__main__':
-    train_gen = DatasetGenerator(wandb.config["dataset"], split='train', pairwise=False, limit_dataset_size=wandb.config.limit_dataset_size)
+    train_gen = DatasetGenerator(wandb.config.dataset, split='train', pairwise=False, limit_dataset_size=wandb.config.limit_dataset_size)
                                  #val_gen = DatasetGenerator(language='en', split='dev')
 
     num_features = len(train_gen.train_data[0][0])
