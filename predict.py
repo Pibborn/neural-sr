@@ -8,6 +8,7 @@ import yaml
 import pandas as pd
 import numpy as np
 import tensorflow as tf
+import sys
 
 
 def predictions_to_pandas(model, x, y, q):
@@ -44,38 +45,47 @@ def predictions_to_pandas(model, x, y, q):
             panda_out = pd.DataFrame(all_out_data.astype(int), columns=table.columns)
             table = table.append(panda_out)
 
-            # for d in data:
-            #     table.append(*d)
-
     return table
-
 
 # Disabling GPU computation since is not useful with these experiments
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 restored_model = wandb.restore(
-    'model.h5', run_path="jgu-wandb/neural-sr/3kldppmo")
+    'model.h5', run_path=sys.argv[1])
 restored_config = wandb.restore(
-    'config.yaml', run_path="jgu-wandb/neural-sr/3kldppmo")
+    'config.yaml', run_path=sys.argv[1])
 
 with open(restored_config.name) as file:
     config = yaml.safe_load(file)
 
+config['limit_dataset_size'] = { 'desc': None, 'value': None }
+config['target-run'] = { 'desc': 'wandb run used to restore the model', 'value': sys.argv[1] }
+
+WORKAROUND_CONFIG_FILE = "predict-config.yaml"
+with open(WORKAROUND_CONFIG_FILE, 'w') as file:
+    yaml.dump(config, stream=file)
+
+run = wandb.init(
+        project="neural-sr", 
+        entity="jgu-wandb",
+        config=WORKAROUND_CONFIG_FILE,
+        job_type="model-test")
+
 if __name__ == '__main__':
-    train_gen = DatasetGenerator(config["dataset"]["value"], language='en', split='train', pairwise=False, limit_dataset_size=config['limit_dataset_size']["value"])
+    train_gen = DatasetGenerator(wandb.config.dataset, split='train', pairwise=False, limit_dataset_size=wandb.config.limit_dataset_size)
                                  #val_gen = DatasetGenerator(language='en', split='dev')
 
     num_features = len(train_gen.train_data[0][0])
     dr = ListNet(
                 num_features=num_features, 
-                batch_size=config['batch_size']["value"], 
-                epoch=config['epoch']["value"],
+                batch_size=wandb.config.batch_size, 
+                epoch=wandb.config.epoch,
                 verbose=1, 
                 learning_rate_decay_rate=0, 
-                feature_activation_dr=config['feature_activation']["value"], 
-                kernel_regularizer_dr=config['regularization']["value"],
-                learning_rate=config['learning_rate']["value"],
-                hidden_layers_dr=config['hidden_layers']["value"])
+                feature_activation_dr=wandb.config.feature_activation, 
+                kernel_regularizer_dr=wandb.config.regularization,
+                learning_rate=wandb.config.learning_rate,
+                hidden_layers_dr=wandb.config.hidden_layers)
 
 
     dr._build_model()
@@ -84,7 +94,21 @@ if __name__ == '__main__':
     dr.model.load_weights(restored_model.name)
     dr.verbose = False
 
-    X,y,q = train_gen.dev_data
+    artifact = wandb.Artifact('predictions', type="predictions")
 
-    predictions_to_pandas(dr, X,y,q).to_csv("predictions.csv")
+
+    for item in [(train_gen.dev_data, "validation"), (train_gen.test_data, "test"), (train_gen.train_data, "train")]:
+        ds, label = item
+        X,y,q = ds
+
+        dataframe = predictions_to_pandas(dr, X,y,q)
+        predictions_file = "predictions_{}.csv".format(label)
+        dataframe.to_csv(predictions_file)
+
+        artifact.add_file(predictions_file)
+
+    run.log_artifact(artifact)
+
+
+
 
