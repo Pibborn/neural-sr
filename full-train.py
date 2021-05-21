@@ -15,7 +15,7 @@ import sys
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 restored_config = wandb.restore(
-    'config.yaml', run_path=sys.argv[1])
+    'config.yaml', run_path=sys.argv[1], replace=True, root=os.path.join("tmp", sys.argv[1]))
 
 # Working around bug in wandb which does not allow to change config values
 # even when allow_val_change is set to True. To workaround that, we remove

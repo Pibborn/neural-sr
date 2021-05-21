@@ -51,9 +51,9 @@ def predictions_to_pandas(model, x, y, q):
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 restored_model = wandb.restore(
-    'model.h5', run_path=sys.argv[1])
+    'model.h5', run_path=sys.argv[1], replace=True, root=os.path.join("tmp", sys.argv[1]))
 restored_config = wandb.restore(
-    'config.yaml', run_path=sys.argv[1])
+    'config.yaml', run_path=sys.argv[1], replace=True, root=os.path.join("tmp", sys.argv[1]))
 
 with open(restored_config.name) as file:
     config = yaml.safe_load(file)
@@ -94,7 +94,8 @@ if __name__ == '__main__':
     dr.model.load_weights(restored_model.name)
     dr.verbose = False
 
-    artifact = wandb.Artifact('predictions', type="predictions")
+    dataset_name = wandb.config.dataset.split('/')[1]
+    artifact = wandb.Artifact('{}_predictions'.format(dataset_name), type="predictions")
 
 
     for item in [(train_gen.dev_data, "validation"), (train_gen.test_data, "test"), (train_gen.train_data, "train")]:
@@ -108,7 +109,4 @@ if __name__ == '__main__':
         artifact.add_file(predictions_file)
 
     run.log_artifact(artifact)
-
-
-
 
