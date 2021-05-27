@@ -22,3 +22,6 @@ hidden_layers:
 limit_dataset_size:
   desc: maximum number of rows to read from datasets on disk (-1 to load them all)
   value: 1000
+pairwise:
+  desc: employ a DirectRanker if true
+  value: false
