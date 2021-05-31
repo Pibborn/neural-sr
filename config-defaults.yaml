@@ -3,7 +3,7 @@ dataset:
   value: hvr/en_ewt-ud
 epoch:
   desc: Number of epochs to train over
-  value: 300
+  value: 60
 batch_size:
   desc: Size of each mini-batch
   value: 1024
@@ -24,4 +24,4 @@ limit_dataset_size:
   value: 1000
 pairwise:
   desc: employ a DirectRanker if true
-  value: false
+  value: true

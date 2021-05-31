@@ -51,7 +51,10 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         self.current_split = str
 
     def __len__(self):
-        return len(self.q_order) -1
+        if self.pairwise:
+            return int(np.floor((len(self.q_order) - 1) / self.query_per_batch)) - 1
+        else:
+            return len(self.q_order) -1
 
     def __getitem__(self, i):
         if self.query:
@@ -71,7 +74,9 @@ class DatasetGenerator(tf.keras.utils.Sequence):
             q_idx = self.q == qi
             x_q = self.x[q_idx]
             y_q = self.y[q_idx]
-            sort_ids = np.argsort(y_q)
+            if len(x_q) == 1:
+                continue
+            sort_ids = np.argsort(y_q)[::-1]
             x_q = x_q[sort_ids]
             y_q = y_q[sort_ids]
             max_samples_qi = int(min(np.ceil(self.batch_size / self.query_per_batch), len(x_q)))

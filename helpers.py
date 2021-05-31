@@ -32,11 +32,15 @@ def kendall_tau_per_query(y_pred, y, q):
 
 class PrintKendalTau(keras.callbacks.Callback):
 
-    def __init__(self, eval_data):
+    def __init__(self, eval_data, pairwise=False):
         self.generator = eval_data
+        self.pairwise = pairwise
 
     def log_tau(self, epoch, ds, ds_name):
-        y_pred = self.model.predict(ds[0])
+        if self.pairwise:
+            y_pred = self.model.predict([ds[0], np.zeros(ds[0].shape)])
+        else:
+            y_pred = self.model.predict(ds[0])
         y = ds[1]
         q = ds[2]
 

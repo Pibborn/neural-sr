@@ -28,3 +28,7 @@ parameters:
     distribution: categorical
   limit_dataset_size:
     values: [50000]
+  pairwise:
+    values: [true]
+  batch_size:
+    values: [1024]

@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-
+from helpers import PrintKendalTau, PrintTensor
 from sklearn.base import BaseEstimator
 
 class DirectRanker(BaseEstimator):
@@ -171,7 +171,8 @@ class DirectRanker(BaseEstimator):
             generator=generator,
             epochs=self.epoch,
             verbose=self.verbose,
-            workers=1
+            workers=1,
+            callbacks=[PrintKendalTau(generator, pairwise=True), PrintTensor(generator, self.model)]
         )
 
     def predict_proba(self, features):

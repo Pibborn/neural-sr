@@ -25,6 +25,7 @@ if __name__ == '__main__':
 
     num_features = len(train_gen.train_data[0][0])
     if wandb.config.pairwise:
+        print('Using DirectRanker.')
         dr = DirectRanker(
             num_features=num_features,
             batch_size=wandb.config.batch_size,
@@ -36,6 +37,7 @@ if __name__ == '__main__':
             learning_rate=wandb.config.learning_rate,
             hidden_layers_dr=wandb.config.hidden_layers)
     else:
+        print('Using ListNet.')
         dr = ListNet(
                     num_features=num_features,
                     batch_size=wandb.config.batch_size,
