@@ -60,6 +60,7 @@ with open(restored_config.name) as file:
 
 config['limit_dataset_size'] = { 'desc': None, 'value': None }
 config['target-run'] = { 'desc': 'wandb run used to restore the model', 'value': sys.argv[1] }
+config['pairwise'] = {'desc': 'use pairwise model', 'value': sys.argv[2]}
 
 WORKAROUND_CONFIG_FILE = "predict-config.yaml"
 with open(WORKAROUND_CONFIG_FILE, 'w') as file:
@@ -72,21 +73,34 @@ run = wandb.init(
         job_type="model-test")
 
 if __name__ == '__main__':
+    # note that at test time the DirectRanker does not need paired data points, hence pairwise=False
     train_gen = DatasetGenerator(wandb.config.dataset, split='train', pairwise=False, limit_dataset_size=wandb.config.limit_dataset_size)
                                  #val_gen = DatasetGenerator(language='en', split='dev')
 
     num_features = len(train_gen.train_data[0][0])
-    dr = ListNet(
-                num_features=num_features, 
-                batch_size=wandb.config.batch_size, 
-                epoch=wandb.config.epoch,
-                verbose=1, 
-                learning_rate_decay_rate=0, 
-                feature_activation_dr=wandb.config.feature_activation, 
-                kernel_regularizer_dr=wandb.config.regularization,
-                learning_rate=wandb.config.learning_rate,
-                hidden_layers_dr=wandb.config.hidden_layers)
-
+    if not wandb.config['pairwise']:
+        dr = ListNet(
+                    num_features=num_features, 
+                    batch_size=wandb.config.batch_size, 
+                    epoch=wandb.config.epoch,
+                    verbose=1, 
+                    learning_rate_decay_rate=0, 
+                    feature_activation_dr=wandb.config.feature_activation, 
+                    kernel_regularizer_dr=wandb.config.regularization,
+                    learning_rate=wandb.config.learning_rate,
+                    hidden_layers_dr=wandb.config.hidden_layers)
+    else:
+        print('Using DirectRanker.')
+        dr = DirectRanker(
+                    num_features=num_features, 
+                    batch_size=wandb.config.batch_size, 
+                    epoch=wandb.config.epoch,
+                    verbose=1, 
+                    learning_rate_decay_rate=0, 
+                    feature_activation_dr=wandb.config.feature_activation, 
+                    kernel_regularizer_dr=wandb.config.regularization,
+                    learning_rate=wandb.config.learning_rate,
+                    hidden_layers_dr=wandb.config.hidden_layers)
 
     dr._build_model()
     dr.model.summary()
@@ -103,7 +117,7 @@ if __name__ == '__main__':
         X,y,q = ds
 
         dataframe = predictions_to_pandas(dr, X,y,q)
-        predictions_file = "predictions_{}.csv".format(label)
+        predictions_file = "predictions_{}_pairwise_{}.csv".format(label, wandb.config['pairwise'])
         dataframe.to_csv(predictions_file)
 
         artifact.add_file(predictions_file)

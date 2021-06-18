@@ -171,7 +171,7 @@ class DirectRanker(BaseEstimator):
             generator=generator,
             epochs=self.epoch,
             verbose=self.verbose,
-            workers=1,
+            workers=32,
             callbacks=[PrintKendalTau(generator, pairwise=True), PrintTensor(generator, self.model)]
         )
 

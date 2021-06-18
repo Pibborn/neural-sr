@@ -42,21 +42,35 @@ if wandb:
         allow_val_change=True)
 
 if __name__ == '__main__':
-    train_gen = DatasetGenerator(wandb.config.dataset, split='train', pairwise=False, limit_dataset_size=wandb.config.limit_dataset_size)
+    train_gen = DatasetGenerator(wandb.config.dataset, split='train', pairwise=wandb.config['pairwise'], limit_dataset_size=wandb.config.limit_dataset_size)
                                  #val_gen = DatasetGenerator(language='en', split='dev')
 
     num_features = len(train_gen.train_data[0][0])
-    dr = ListNet(
-                num_features=num_features, 
-                batch_size=wandb.config.batch_size, 
-                epoch=wandb.config.epoch,
-                verbose=1, 
-                learning_rate_decay_rate=0, 
-                feature_activation_dr=wandb.config.feature_activation, 
-                kernel_regularizer_dr=wandb.config.regularization,
-                learning_rate=wandb.config.learning_rate,
-                hidden_layers_dr=wandb.config.hidden_layers)
-    dr.fit(train_gen)
+    if wandb.config['pairwise'] == True:
+        print('Using DirectRanker.')
+        dr = DirectRanker(
+                    num_features=num_features, 
+                    batch_size=wandb.config.batch_size, 
+                    epoch=wandb.config.epoch,
+                    verbose=1, 
+                    learning_rate_decay_rate=0, 
+                    feature_activation_dr=wandb.config.feature_activation, 
+                    kernel_regularizer_dr=wandb.config.regularization,
+                    learning_rate=wandb.config.learning_rate,
+                    hidden_layers_dr=wandb.config.hidden_layers)
+
+    else:    
+        dr = ListNet(
+                    num_features=num_features, 
+                    batch_size=wandb.config.batch_size, 
+                    epoch=wandb.config.epoch,
+                    verbose=1, 
+                    learning_rate_decay_rate=0, 
+                    feature_activation_dr=wandb.config.feature_activation, 
+                    kernel_regularizer_dr=wandb.config.regularization,
+                    learning_rate=wandb.config.learning_rate,
+                    hidden_layers_dr=wandb.config.hidden_layers)
+    dr.fit(train_gen, use_multiprocessing=True, workers=8)
 
     # y_pred = dr.predict_proba(train_gen.test_data[0])
     dr.model.save(os.path.join(wandb.run.dir, "model.h5"))
