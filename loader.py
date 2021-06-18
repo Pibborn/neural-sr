@@ -1,6 +1,7 @@
 import tensorflow as tf
 import pandas as pd
 import numpy as np
+import random
 from helpers import Constants
 
 def preprocess(df):
@@ -10,12 +11,13 @@ def preprocess(df):
     return x.to_numpy(), y.to_numpy(), q.to_numpy()
 
 class DatasetGenerator(tf.keras.utils.Sequence):
-    def __init__(self, dataset, batch_size=32, shuffle=True, query=True, query_per_batch=5, split='train', pairwise=True, limit_dataset_size=None):
+    def __init__(self, dataset, batch_size=32, shuffle=True, query=True, query_per_batch=10, split='train', pairwise=True, limit_dataset_size=None):
         self.limit_dataset_size = limit_dataset_size
         self.batch_size = batch_size
         self.dataset = dataset
         self.train_data, self.dev_data, self.test_data = self.load_data()
-        self.q_order = np.random.permutation(range(1, max(self.train_data[2])))
+        self.q_order = list(range(1, max(self.train_data[2])))
+        random.shuffle(self.q_order)
         self.q_current = 0
         self.shuffle = shuffle
         self.query = query
@@ -52,14 +54,15 @@ class DatasetGenerator(tf.keras.utils.Sequence):
 
     def __len__(self):
         if self.pairwise:
-            return int(np.floor((len(self.q_order) - 1) / self.query_per_batch)) - 1
+            return int(np.floor((len(np.unique(self.q)) - 1) / self.query_per_batch)) - 1
         else:
-            return len(self.q_order) -1
+            return len(np.unique(self.q)) -1
 
     def __getitem__(self, i):
         if self.query:
             if self.pairwise:
-                x0, x1, y = self.make_pairs_query()
+                x0, x1 = self.x0_epoch[i], self.x1_epoch[i]
+                y = np.ones(len(self.x0_epoch[i]))
                 return [x0, x1], y
             else:
                 return self.make_batch_listnet()
@@ -67,18 +70,16 @@ class DatasetGenerator(tf.keras.utils.Sequence):
             return self.make_pairs(i)
 
     def make_pairs_query(self):
-        q_ids_selected = np.random.choice(np.unique(self.q), self.query_per_batch, replace=False)
         x0_cur = []
         x1_cur = []
-        for qi in q_ids_selected:
+        for i in range(self.query_per_batch):
+            qi = self.q_order.pop()
             q_idx = self.q == qi
-            x_q = self.x[q_idx]
-            y_q = self.y[q_idx]
+            x_q, y_q = self.data_dict[qi]
             if len(x_q) == 1:
                 continue
-            sort_ids = np.argsort(y_q)[::-1]
-            x_q = x_q[sort_ids]
-            y_q = y_q[sort_ids]
+            x_q = x_q[::-1]
+            y_q = y_q[::-1]
             max_samples_qi = int(min(np.ceil(self.batch_size / self.query_per_batch), len(x_q)))
             # get random idxs between 0 and the query length - 1 (the last element can't ever be in the top position)
             idx0 = np.random.randint(0, len(x_q) - 1, max_samples_qi)
@@ -87,10 +88,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
             idx1 += idx0
             x0_cur.extend(x_q[idx0])
             x1_cur.extend(x_q[idx1])
-            self.x = self.x[~q_idx]
-            self.y = self.y[~q_idx]
-            self.q = self.q[~q_idx]
-        return np.array(x0_cur), np.array(x1_cur), np.ones(len(x0_cur))
+        return np.array(x0_cur), np.array(x1_cur)
 
     def make_batch(self):
         num_samples = 0
@@ -138,5 +136,25 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         pass
 
     def on_epoch_end(self):
-        self.x, self.y, self.q = self.data
         self.q_current = 0
+        self.q_order = list(range(1, max(self.train_data[2])))
+        random.shuffle(self.q_order)
+        self.x, self.y, self.q = self.data
+        if self.pairwise:
+            self.data_dict = self.prep_dict()
+            self.x0_epoch = []
+            self.x1_epoch = []
+            for i in range(self.__len__()):
+                if i % 10 == 0:
+                    print('{}/{}'.format(i, self.__len__()))
+                x0_i, x1_i = self.make_pairs_query()
+                self.x0_epoch.append(x0_i)
+                self.x1_epoch.append(x1_i)
+
+    def prep_dict(self):
+        data_dict = {}
+        for qi in self.q:
+            q_idx = self.q == qi
+            data_dict[qi] = (self.x[q_idx], self.y[q_idx])
+        return data_dict
+
