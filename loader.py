@@ -2,6 +2,7 @@ import tensorflow as tf
 import pandas as pd
 import numpy as np
 import random
+from tqdm import tqdm
 from helpers import Constants
 
 def preprocess(df):
@@ -26,6 +27,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         self.set_split(split)
         self.pairwise = pairwise
         self.on_epoch_end()
+        self.data_dict = self.prep_dict()
 
             
     def load_data(self, lang='en'):
@@ -61,8 +63,9 @@ class DatasetGenerator(tf.keras.utils.Sequence):
     def __getitem__(self, i):
         if self.query:
             if self.pairwise:
-                x0, x1 = self.x0_epoch[i], self.x1_epoch[i]
-                y = np.ones(len(self.x0_epoch[i]))
+                #x0, x1 = self.x0_epoch[i], self.x1_epoch[i]
+                x0, x1 = self.make_pairs_query()
+                y = np.ones(len(x0))
                 return [x0, x1], y
             else:
                 return self.make_batch_listnet()
@@ -140,20 +143,19 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         self.q_order = list(range(1, max(self.train_data[2])))
         random.shuffle(self.q_order)
         self.x, self.y, self.q = self.data
-        if self.pairwise:
-            self.data_dict = self.prep_dict()
-            self.x0_epoch = []
-            self.x1_epoch = []
-            for i in range(self.__len__()):
-                if i % 10 == 0:
-                    print('{}/{}'.format(i, self.__len__()))
-                x0_i, x1_i = self.make_pairs_query()
-                self.x0_epoch.append(x0_i)
-                self.x1_epoch.append(x1_i)
+        #if self.pairwise:
+        #    self.x0_epoch = []
+        #    self.x1_epoch = []
+        #    for i in range(self.__len__()):
+        #        if i % 2000 == 0:
+        #            print('{}/{}'.format(i, self.__len__()))
+        #        x0_i, x1_i = self.make_pairs_query()
+        #        self.x0_epoch.append(x0_i)
+        #        self.x1_epoch.append(x1_i)
 
     def prep_dict(self):
         data_dict = {}
-        for qi in self.q:
+        for qi in tqdm(self.q):
             q_idx = self.q == qi
             data_dict[qi] = (self.x[q_idx], self.y[q_idx])
         return data_dict
