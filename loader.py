@@ -26,8 +26,10 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         self.current_split = split
         self.set_split(split)
         self.pairwise = pairwise
+        self.counter = 0
         self.on_epoch_end()
-        self.data_dict = self.prep_dict()
+        if self.pairwise:
+            self.data_dict = self.prep_dict()
 
             
     def load_data(self, lang='en'):
@@ -57,20 +59,24 @@ class DatasetGenerator(tf.keras.utils.Sequence):
     def __len__(self):
         if self.pairwise:
             return int(np.floor((len(np.unique(self.q)) - 1) / self.query_per_batch)) - 1
+        if not self.query:
+            return int(np.floor((len(self.q_order) - 1) / self.batch_size)) - 1
         else:
-            return len(np.unique(self.q)) -1
+            return len(np.unique(self.q)) - 1
 
     def __getitem__(self, i):
         if self.query:
             if self.pairwise:
-                #x0, x1 = self.x0_epoch[i], self.x1_epoch[i]
                 x0, x1 = self.make_pairs_query()
                 y = np.ones(len(x0))
                 return [x0, x1], y
             else:
                 return self.make_batch_listnet()
         else:
-            return self.make_pairs(i)
+            a = self.make_batch()
+            if len(a[0]) == 0:
+                print('i: {}'.format(i))
+            return a
 
     def make_pairs_query(self):
         x0_cur = []
@@ -94,17 +100,17 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         return np.array(x0_cur), np.array(x1_cur)
 
     def make_batch(self):
-        num_samples = 0
+        num_queries = 0
         x_cur = []
         y_cur = []
-        while num_samples < self.batch_size:
+        while num_queries < self.batch_size:
             qi = self.q == self.q_order[self.q_current]
             x_q = self.x[qi]
             y_q = 1 / self.y[qi]
             x_cur.extend(x_q)
             y_cur.extend(y_q)
             self.q_current += 1
-            num_samples = len(x_cur)
+            num_queries += 1
         return np.array(x_cur), np.array(y_cur)
 
     def make_batch_listnet(self, i=None):
@@ -134,7 +140,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
             x_cur.extend(x_q)
             y_cur.extend(y_q)
         return np.array(x_cur), np.array(y_cur)
-
+    
     def make_pairs(self, i):
         pass
 

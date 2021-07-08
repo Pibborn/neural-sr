@@ -5,6 +5,7 @@ from wandb.env import ARGS
 from loader import DatasetGenerator
 from models.DirectRanker import DirectRanker
 from models.ListNet import ListNet
+from models.PointwiseNet import PointwiseNet
 from helpers import kendall_tau_per_query
 import wandb
 import os
@@ -46,30 +47,44 @@ if __name__ == '__main__':
                                  #val_gen = DatasetGenerator(language='en', split='dev')
 
     num_features = len(train_gen.train_data[0][0])
-    if wandb.config['pairwise'] == True:
-        print('Using DirectRanker.')
-        dr = DirectRanker(
-                    num_features=num_features, 
-                    batch_size=wandb.config.batch_size, 
-                    epoch=wandb.config.epoch,
-                    verbose=1, 
-                    learning_rate_decay_rate=0, 
-                    feature_activation_dr=wandb.config.feature_activation, 
-                    kernel_regularizer_dr=wandb.config.regularization,
-                    learning_rate=wandb.config.learning_rate,
-                    hidden_layers_dr=wandb.config.hidden_layers)
-
-    else:    
-        dr = ListNet(
-                    num_features=num_features, 
-                    batch_size=wandb.config.batch_size, 
-                    epoch=wandb.config.epoch,
-                    verbose=1, 
-                    learning_rate_decay_rate=0, 
-                    feature_activation_dr=wandb.config.feature_activation, 
-                    kernel_regularizer_dr=wandb.config.regularization,
-                    learning_rate=wandb.config.learning_rate,
-                    hidden_layers_dr=wandb.config.hidden_layers)
+    if not wandb.config.query:
+        print('Using pointwise ranker.')
+        dr = PointwiseNet(
+            num_features=num_features,
+            batch_size=wandb.config.batch_size,
+            epoch=wandb.config.epoch,
+            verbose=1,
+            learning_rate_decay_rate=0,
+            feature_activation_dr=wandb.config.feature_activation,
+            kernel_regularizer_dr=wandb.config.regularization,
+            learning_rate=wandb.config.learning_rate,
+            hidden_layers_dr=wandb.config.hidden_layers
+        )
+    else:
+        if wandb.config.pairwise:
+            print('Using DirectRanker.')
+            dr = DirectRanker(
+                num_features=num_features,
+                batch_size=wandb.config.batch_size,
+                epoch=wandb.config.epoch,
+                verbose=1,
+                learning_rate_decay_rate=0,
+                feature_activation_dr=wandb.config.feature_activation,
+                kernel_regularizer_dr=wandb.config.regularization,
+                learning_rate=wandb.config.learning_rate,
+                hidden_layers_dr=wandb.config.hidden_layers)
+        else:
+            print('Using ListNet.')
+            dr = ListNet(
+                num_features=num_features,
+                batch_size=wandb.config.batch_size,
+                epoch=wandb.config.epoch,
+                verbose=1,
+                learning_rate_decay_rate=0,
+                feature_activation_dr=wandb.config.feature_activation,
+                kernel_regularizer_dr=wandb.config.regularization,
+                learning_rate=wandb.config.learning_rate,
+                hidden_layers_dr=wandb.config.hidden_layers)
     dr.fit(train_gen, use_multiprocessing=True, workers=8)
 
     # y_pred = dr.predict_proba(train_gen.test_data[0])

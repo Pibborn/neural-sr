@@ -29,6 +29,8 @@ parameters:
   limit_dataset_size:
     values: [50000]
   pairwise:
+    values: [false]
+  query:
     values: [true]
   batch_size:
     values: [1024]
