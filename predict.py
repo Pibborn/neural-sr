@@ -13,7 +13,10 @@ import sys
 
 def predictions_to_pandas(model, x, y, q):
     print("predicting")
-    y_ = model.predict_proba(x).numpy().astype(np.double)
+    if model.name == 'ListNet':
+        y_ = model.predict_proba(x).numpy().astype(np.double)
+    else:
+        y_ = model.predict_proba(x).astype(np.double)
     table = pd.DataFrame(columns=["ex_id", "y_actual", "y_pred"])
 
     print(print(kendall_tau_per_query(y_, y, q)))
@@ -81,7 +84,7 @@ if __name__ == '__main__':
     if not wandb.config['pairwise']:
         dr = ListNet(
                     num_features=num_features, 
-                    batch_size=wandb.config.batch_size, 
+                    batch_size=512, 
                     epoch=wandb.config.epoch,
                     verbose=1, 
                     learning_rate_decay_rate=0, 
@@ -93,7 +96,7 @@ if __name__ == '__main__':
         print('Using DirectRanker.')
         dr = DirectRanker(
                     num_features=num_features, 
-                    batch_size=wandb.config.batch_size, 
+                    batch_size=512, 
                     epoch=wandb.config.epoch,
                     verbose=1, 
                     learning_rate_decay_rate=0, 
