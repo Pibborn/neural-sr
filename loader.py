@@ -106,7 +106,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         while num_queries < self.batch_size:
             qi = self.q == self.q_order[self.q_current]
             x_q = self.x[qi]
-            y_q = 1 / self.y[qi]
+            y_q = self.y[qi]
             x_cur.extend(x_q)
             y_cur.extend(y_q)
             self.q_current += 1
