@@ -1,3 +1,4 @@
+from models.PointwiseNet import PointwiseNet
 from loader import DatasetGenerator
 from models.DirectRanker import DirectRanker
 from models.ListNet import ListNet
@@ -77,11 +78,23 @@ run = wandb.init(
 
 if __name__ == '__main__':
     # note that at test time the DirectRanker does not need paired data points, hence pairwise=False
-    train_gen = DatasetGenerator(wandb.config.dataset, split='train', pairwise=False, limit_dataset_size=wandb.config.limit_dataset_size)
+    train_gen = DatasetGenerator(wandb.config.dataset, split='train', query=wandb.config.query,  pairwise=False, limit_dataset_size=wandb.config.limit_dataset_size)
                                  #val_gen = DatasetGenerator(language='en', split='dev')
 
     num_features = len(train_gen.train_data[0][0])
-    if not wandb.config['pairwise']:
+    if not wandb.config.query:
+        print('Using Pointwise ranker')
+        dr = PointwiseNet(num_features=num_features,
+                          batch_size=wandb.config.batch_size,
+                          epoch=wandb.config.epoch,
+                          verbose=1,
+                          learning_rate_decay_rate=0,
+                          feature_activation_dr=wandb.config.feature_activation,
+                          kernel_regularizer_dr=wandb.config.regularization,
+                          learning_rate=wandb.config.learning_rate,
+                          hidden_layers_dr=wandb.config.hidden_layers)
+    elif not wandb.config['pairwise']:
+        print('Using ListNet')
         dr = ListNet(
                     num_features=num_features, 
                     batch_size=512, 
